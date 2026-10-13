@@ -1,0 +1,39 @@
+#!/bin/sh
+set -eu
+
+case " $* " in
+  *" info "*)
+    cat <<'EOF'
+CINFO:1,6206,"DVD disc"
+CINFO:2,0,"Arrival"
+TCOUNT:4
+TINFO:0,8,0,"24"
+TINFO:0,9,0,"1:56:12"
+TINFO:0,10,0,"6.8 GB"
+TINFO:0,11,0,"7301444403"
+TINFO:0,27,0,"title00.mkv"
+TINFO:1,8,0,"6"
+TINFO:1,9,0,"0:24:12"
+TINFO:1,10,0,"1.1 GB"
+TINFO:1,11,0,"1181116006"
+TINFO:2,8,0,"6"
+TINFO:2,9,0,"0:23:51"
+TINFO:2,10,0,"1.0 GB"
+TINFO:2,11,0,"1073741824"
+TINFO:3,8,0,"1"
+TINFO:3,9,0,"0:01:24"
+TINFO:3,10,0,"78 MB"
+TINFO:3,11,0,"81788928"
+EOF
+    ;;
+  *" mkv "*)
+    for output do :; done
+    mkdir -p "$output"
+    printf 'mock mkv data' > "$output/title00.mkv"
+    printf 'PRGV:0,100,100\n'
+    ;;
+  *)
+    printf 'Unknown mock command\n' >&2
+    exit 2
+    ;;
+esac

@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <meta name="theme-color" content="#101721">
+  <title>Disc Ingest</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/app.css">
+  <script src="/app.js" defer></script>
+</head>
+<body>
+  <!--
+  THESIS: Disc ingestion is one visible signal path from physical media to a named Jellyfin destination; this refuses the generic dashboard grid.
+  OWN-WORLD: Matte graphite rack panels, calibrated rules, warm white labels, amber drive state, and cyan reserved for active progress and the primary action.
+  STORY: Confirm the disc, identify movie or show, verify the exact filesystem path and titles, then rip with honest progress and recovery detail.
+  FIRST VIEWPORT: A compact header and four-stage rail sit above a wide task console; the primary form owns the left two-thirds and live operation state anchors the right.
+  FORM: Broadcast-ingest control surface, grounded direction 7, seed 76fd7a9f.
+  FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, and DESIGN.md
+  -->
+  <header class="app-header">
+    <div class="brand-mark" aria-hidden="true">
+      <svg viewBox="0 0 48 48" role="img">
+        <circle cx="24" cy="24" r="16"></circle>
+        <circle cx="24" cy="24" r="5"></circle>
+        <path d="M24 8a16 16 0 0 1 15 10"></path>
+      </svg>
+    </div>
+    <div>
+      <h1>Disc Ingest</h1>
+      <p>Physical media into your Jellyfin library</p>
+    </div>
+    <div class="host-readout">
+      <span class="status-lamp" id="header-lamp" aria-hidden="true"></span>
+      <span id="header-state">Connecting</span>
+    </div>
+  </header>
+
+  <nav class="signal-path" aria-label="Rip workflow">
+    <div class="signal-stage is-active" data-stage="disc"><span>1</span><strong>Disc</strong><small>Read media</small></div>
+    <i aria-hidden="true"></i>
+    <div class="signal-stage" data-stage="identify"><span>2</span><strong>Identify</strong><small>Movie or show</small></div>
+    <i aria-hidden="true"></i>
+    <div class="signal-stage" data-stage="destination"><span>3</span><strong>Destination</strong><small>Review path</small></div>
+    <i aria-hidden="true"></i>
+    <div class="signal-stage" data-stage="rip"><span>4</span><strong>Rip</strong><small>Add to library</small></div>
+  </nav>
+
+  <main class="console-layout">
+    <form id="rip-form" class="ingest-form" novalidate>
+      <section class="console-section disc-section" aria-labelledby="disc-heading">
+        <div class="section-heading">
+          <div class="section-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"></circle><circle cx="12" cy="12" r="2"></circle></svg>
+          </div>
+          <div><h2 id="disc-heading">Disc</h2><p>Check the media currently in the drive.</p></div>
+        </div>
+        <div class="disc-readout">
+          <div class="disc-visual" id="disc-visual" aria-hidden="true"><b></b><i></i></div>
+          <div class="disc-copy">
+            <strong id="disc-name">Waiting for drive</strong>
+            <span id="disc-summary">Connecting to Disc Ingest…</span>
+            <code id="drive-path">/dev/sr0</code>
+          </div>
+          <div class="disc-actions">
+            <button class="button-secondary" id="scan-button" type="button">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 11a8 8 0 1 0-2.3 5.7"></path><path d="M20 4v7h-7"></path></svg>
+              Scan disc
+            </button>
+            <button class="button-quiet" id="eject-button" type="button">Eject</button>
+          </div>
+        </div>
+      </section>
+
+      <div class="form-error" id="form-error" role="alert" hidden></div>
+
+      <section class="console-section" aria-labelledby="identify-heading">
+        <div class="section-heading">
+          <div class="section-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><path d="M4 5h10l6 6-9 9-7-7z"></path><circle cx="9" cy="10" r="1.5"></circle></svg>
+          </div>
+          <div><h2 id="identify-heading">Identify</h2><p>Choose how Jellyfin should organize this disc.</p></div>
+        </div>
+
+        <fieldset class="media-switch">
+          <legend>Content type</legend>
+          <label><input type="radio" name="media_type" value="movie" checked><span>Movie</span></label>
+          <label><input type="radio" name="media_type" value="show"><span>TV Show</span></label>
+        </fieldset>
+
+        <div class="field-grid">
+          <label class="field field-wide">
+            <span id="name-label">Movie title</span>
+            <input id="media-name" name="name" type="text" maxlength="120" autocomplete="off" placeholder="Movie title" required>
+          </label>
+          <label class="field" id="year-field">
+            <span>Year <em>optional</em></span>
+            <input id="movie-year" name="year" type="number" min="1888" max="2100" inputmode="numeric" placeholder="2024">
+          </label>
+          <label class="field is-hidden" id="season-field">
+            <span>Season</span>
+            <input id="season-number" name="season" type="number" min="0" max="99" inputmode="numeric" value="1">
+          </label>
+          <label class="field is-hidden" id="episode-field">
+            <span>Starting episode</span>
+            <input id="episode-number" name="starting_episode" type="number" min="0" max="999" inputmode="numeric" value="1">
+          </label>
+        </div>
+      </section>
+
+      <section class="console-section" aria-labelledby="destination-heading">
+        <div class="section-heading">
+          <div class="section-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><path d="M3 6h7l2 2h9v11H3z"></path></svg>
+          </div>
+          <div><h2 id="destination-heading">Destination</h2><p>Completed files appear here only after the rip succeeds.</p></div>
+        </div>
+        <div class="destination-readout">
+          <span>Jellyfin library path</span>
+          <code id="destination-path">/mnt/data/Movies/Untitled</code>
+        </div>
+      </section>
+
+      <section class="console-section titles-section" aria-labelledby="titles-heading">
+        <div class="section-heading">
+          <div class="section-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><path d="M8 6h13M8 12h13M8 18h13"></path><circle cx="3" cy="6" r="1"></circle><circle cx="3" cy="12" r="1"></circle><circle cx="3" cy="18" r="1"></circle></svg>
+          </div>
+          <div><h2 id="titles-heading">Disc titles</h2><p id="titles-help">The longest title will be selected for a movie.</p></div>
+        </div>
+        <div class="title-table-wrap">
+          <table>
+            <thead><tr><th><span class="visually-hidden">Select</span></th><th>Title</th><th>Duration</th><th>Size</th><th>Chapters</th></tr></thead>
+            <tbody id="title-list"><tr><td colspan="5" class="empty-table">Scan a disc to see its titles.</td></tr></tbody>
+          </table>
+        </div>
+      </section>
+
+      <button class="button-primary" id="rip-button" type="submit" disabled>
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"></circle><circle cx="12" cy="12" r="2"></circle></svg>
+        <span>Rip movie</span>
+      </button>
+    </form>
+
+    <aside class="operation-column" aria-labelledby="operation-heading">
+      <section class="operation-panel">
+        <div class="operation-title">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12h4l2-6 4 12 2-6h6"></path></svg>
+          <h2 id="operation-heading">Operation</h2>
+        </div>
+        <div class="operation-state" aria-live="polite">
+          <span class="operation-indicator" id="operation-indicator"></span>
+          <div><strong id="operation-status">Connecting</strong><p id="operation-message">Reading controller state…</p></div>
+        </div>
+        <div class="operation-error" id="operation-error" role="alert" hidden></div>
+        <div class="progress-track" id="progress-track" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+          <i id="progress-bar"></i>
+        </div>
+        <div class="operation-detail"><span id="operation-action">Waiting</span><b id="progress-label">0%</b></div>
+        <ol class="operation-path">
+          <li data-op="disc"><i></i><span>Disc</span><small id="op-disc">Waiting</small></li>
+          <li data-op="identify"><i></i><span>Identify</span><small id="op-identify">Not set</small></li>
+          <li data-op="destination"><i></i><span>Destination</span><small id="op-destination">Not set</small></li>
+          <li data-op="rip"><i></i><span>Rip</span><small id="op-rip">Waiting to start</small></li>
+        </ol>
+        <button class="button-danger" id="cancel-button" type="button" hidden>Stop operation</button>
+      </section>
+
+      <section class="activity-panel">
+        <div class="operation-title">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 3h10l4 4v14H5z"></path><path d="M15 3v5h5M8 13h8M8 17h8"></path></svg>
+          <h2>Recent activity</h2>
+        </div>
+        <div class="activity-log" id="activity-log" tabindex="0" aria-label="Recent operation messages">Waiting for controller…</div>
+      </section>
+
+      <p class="safety-note">Incomplete rips stay in a hidden staging directory and are never presented to Jellyfin.</p>
+    </aside>
+  </main>
+</body>
+</html>

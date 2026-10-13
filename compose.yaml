@@ -1,0 +1,33 @@
+name: disc-ingest
+
+services:
+  disc-ingest:
+    image: "ghcr.io/aidanhsl/disc-ingest:${IMAGE_TAG:-latest}"
+    container_name: "${CONTAINER_NAME:-disc-ingest}"
+    hostname: "${CONTAINER_HOSTNAME:-disc-ingest}"
+    restart: unless-stopped
+    ports:
+      - "${WEB_BIND_ADDRESS:-127.0.0.1}:${WEB_PORT:-8080}:8080"
+    environment:
+      USER_ID: "${USER_ID:-1000}"
+      GROUP_ID: "${GROUP_ID:-1000}"
+      SUP_GROUP_IDS: "${SUP_GROUP_IDS:-}"
+      UMASK: "${UMASK:-0022}"
+      TZ: "${TZ:-Etc/UTC}"
+      MAKEMKV_KEY: "${MAKEMKV_KEY:-BETA}"
+      MAKEMKV_GUI: "1"
+      AUTO_DISC_RIPPER: "0"
+      WEB_LISTENING_PORT: "-1"
+      VNC_LISTENING_PORT: "-1"
+      APP_PORT: "8080"
+      MEDIA_ROOT: "/mnt/data"
+      OPTICAL_BLOCK_DEVICE: "${OPTICAL_BLOCK_DEVICE:-/dev/sr0}"
+      AUTO_EJECT: "${AUTO_EJECT:-1}"
+      WEB_USERNAME: "${WEB_USERNAME:-}"
+      WEB_PASSWORD: "${WEB_PASSWORD:-}"
+    volumes:
+      - "${CONFIG_DIR:-./data/config}:/config:rw"
+      - "${MEDIA_DIR:?Set MEDIA_DIR in .env}:/mnt/data:rw"
+    devices:
+      - "${OPTICAL_BLOCK_DEVICE:-/dev/sr0}:${OPTICAL_BLOCK_DEVICE:-/dev/sr0}"
+      - "${OPTICAL_GENERIC_DEVICE:-/dev/sg0}:${OPTICAL_GENERIC_DEVICE:-/dev/sg0}"
