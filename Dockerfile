@@ -1,7 +1,5 @@
 FROM jlesage/makemkv:v26.09.2
 
-USER root
-
 RUN add-pkg python3
 
 COPY app /opt/disc-ingest
